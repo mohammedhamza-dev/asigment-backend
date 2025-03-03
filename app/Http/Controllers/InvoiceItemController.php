@@ -43,4 +43,13 @@ class InvoiceItemController extends Controller
         $invoiceItem->delete();
         return response()->json(null, 204);
     }
+
+    /**
+     * Get all invoice items by invoice ID
+     */
+    public function getByInvoiceId($invoice_id)
+    {
+        $items = InvoiceItem::where('invoice_id', $invoice_id)->paginate(10);
+        return response()->json($items);
+    }
 }

@@ -19,6 +19,8 @@ Route::get('/customers/{customer_id}/contracts', [ContractController::class, 'ge
 Route::apiResource('contracts', ContractController::class);
 Route::apiResource('invoices', InvoiceController::class);
 Route::apiResource('invoice-items', InvoiceItemController::class);
+Route::get('/invoices/customer/{customer_id}', [InvoiceController::class, 'getByCustomer']);
+Route::get('invoice-items/invoice/{invoice_id}', [InvoiceItemController::class, 'getByInvoiceId']);
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);

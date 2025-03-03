@@ -40,4 +40,8 @@ class InvoiceController extends Controller
         $invoice->delete();
         return response()->json(null, 204);
     }
+    public function getByCustomer($customer_id)
+    {
+        return Invoice::where('customer_id', $customer_id)->with('items', 'creator:id,name')->paginate(10);
+    }
 }

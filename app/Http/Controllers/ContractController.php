@@ -46,10 +46,12 @@ class ContractController extends Controller
 
     public function getContractsByCustomer($customer_id)
     {
-        $contracts = Contract::where('customer_id', $customer_id)->with(['customer', 'creator:id,name'])->get();
-
+        $contracts = Contract::where('customer_id', $customer_id)
+        ->with(['customer', 'creator:id,name'])
+        ->paginate(10); // Change 10 to the number of items per page
+    
         if ($contracts->isEmpty()) {
-            return response()->json(['message' => 'لا توجد عقود لهذا العميل'], 404);
+            return response()->json(['message' => '  not have contact for this customer'], 404);
         }
 
         return response()->json($contracts, 200);
