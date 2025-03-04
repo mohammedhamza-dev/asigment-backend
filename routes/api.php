@@ -7,6 +7,7 @@ use App\Http\Controllers\ContractController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\InvoiceItemController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\socialController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -15,6 +16,11 @@ Route::get('/user', function (Request $request) {
 Route::apiResource('customers', CustomerController::class);
 Route::apiResource('customers', CustomerController::class);
 Route::get('/customers/{customer_id}/contracts', [ContractController::class, 'getContractsByCustomer']);
+
+
+Route::get('/google', [socialController::class, 'redirectToAuth']);
+
+
 
 Route::apiResource('contracts', ContractController::class);
 Route::apiResource('invoices', InvoiceController::class);
