@@ -18,11 +18,19 @@ Route::apiResource('customers', CustomerController::class);
 Route::get('/customers/{customer_id}/contracts', [ContractController::class, 'getContractsByCustomer']);
 
 
-Route::get('/google', [socialController::class, 'redirectToAuth']);
+
+Route::get('/customer/{id}', action: [CustomerController::class, 'findById']);
+
+
+Route::get('/google', action: [socialController::class, 'redirectToAuth']);
 
 
 
 Route::apiResource('contracts', ContractController::class);
+Route::get('/contracts/{id}', action: [ContractController::class, 'findById']);
+
+
+
 Route::apiResource('invoices', InvoiceController::class);
 Route::apiResource('invoice-items', InvoiceItemController::class);
 Route::get('/invoices/customer/{customer_id}', [InvoiceController::class, 'getByCustomer']);

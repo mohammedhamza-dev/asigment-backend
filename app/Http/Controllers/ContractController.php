@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Contract;
+use App\Models\Customer;
 use Illuminate\Http\Request;
 
 class ContractController extends Controller
@@ -43,17 +44,33 @@ class ContractController extends Controller
         $contract->delete();
         return response()->json(null, 204);
     }
-
+    public function findById($id)
+    {
+        $Contract = Contract::find($id);
+        
+        if (!$Contract) {
+            return response()->json(['message' => 'Contract not found'], 404);
+        }
+        
+        return response()->json($Contract);
+    }
     public function getContractsByCustomer($customer_id)
     {
-        $contracts = Contract::where('customer_id', $customer_id)
-        ->with(['customer', 'creator:id,name'])
-        ->paginate(10); // Change 10 to the number of items per page
+        // Check if the customer exists
+        $customerExists = Customer::where('id', $customer_id)->exists();
     
-        if ($contracts->isEmpty()) {
-            return response()->json(['message' => '  not have contact for this customer'], 404);
+        if (!$customerExists) {
+            return response()->json(['error' => 'Customer not found'], 404);
         }
-
+    
+        // Fetch contracts for the customer
+        $contracts = Contract::where('customer_id', $customer_id)
+            ->with(['customer', 'creator:id,name'])
+            ->paginate(10);
+    
+    
+    
         return response()->json($contracts, 200);
     }
+    
 }

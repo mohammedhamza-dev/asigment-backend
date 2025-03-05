@@ -1,6 +1,7 @@
 <?php
 namespace App\Http\Controllers;
 
+use App\Models\Customer;
 use App\Models\Invoice;
 use Illuminate\Http\Request;
 
@@ -39,9 +40,17 @@ class InvoiceController extends Controller
     {
         $invoice->delete();
         return response()->json(null, 204);
-    }
-    public function getByCustomer($customer_id)
+    }public function getByCustomer($customer_id)
     {
-        return Invoice::where('customer_id', $customer_id)->with('items', 'creator:id,name')->paginate(10);
+        $customerExists = Customer::where('id', $customer_id)->exists();
+    
+        if (!$customerExists) {
+            return response()->json(['error' => 'Customer not found'], 404);
+        }
+    
+        return Invoice::where('customer_id', $customer_id)
+            ->with('items', 'creator:id,name')
+            ->paginate(10);
     }
+    
 }

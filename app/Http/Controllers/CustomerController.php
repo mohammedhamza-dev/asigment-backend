@@ -27,7 +27,16 @@ class CustomerController extends Controller
         $customer = Customer::create($validated);
         return response()->json($customer, 201);
     }
-
+    public function findById($id)
+    {
+        $customer = Customer::with(['contracts', 'invoices'])->find($id);
+        
+        if (!$customer) {
+            return response()->json(['message' => 'Customer not found'], 404);
+        }
+        
+        return response()->json($customer);
+    }
     public function show(Customer $customer)
     {
         return $customer->load(['contracts', 'invoices']);
