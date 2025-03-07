@@ -41,10 +41,10 @@ class AuthController extends Controller
                 'email.required' => 'Email Is Required',
             ]);
     
-            // Sanitize inputs to prevent XSS (if needed)
-            $cleanName = strip_tags($request->input('name'));
-            $cleanEmail = filter_var($request->input('email'), FILTER_SANITIZE_EMAIL);
-            $cleanPassword = htmlspecialchars($request->input('password'));
+             // ✅ Sanitize inputs
+        $cleanName = strip_tags($request->input('name')); // Removes <script> tags
+        $cleanEmail = filter_var($request->input('email'), FILTER_SANITIZE_EMAIL);
+        $cleanPassword = htmlspecialchars($request->input('password'), ENT_QUOTES, 'UTF-8');
     
             // Create a new user
             $user = User::create([

@@ -5,72 +5,145 @@ namespace App\Http\Controllers;
 use App\Models\Contract;
 use App\Models\Customer;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Exception;
 
 class ContractController extends Controller
 {
     public function index()
     {
-        return Contract::with(['customer', 'creator:id,name'])->get(); // Include creator's name
+        try {
+            return response()->json(
+                Contract::with(['customer', 'creator:id,name'])->get(),
+                200
+            );
+        } catch (Exception $e) {
+            Log::error('Error fetching contracts: ' . $e->getMessage());
+            return response()->json(['error' => 'Internal Server Error'], 500);
+        }
     }
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'customer_id' => 'required|exists:customers,id',
-            'start_date' => 'required|date',
-            'expire_date' => 'required|date|after:start_date',
-            'payment' => 'required|numeric',
-            'note' => 'nullable|string',
-            'created_by' => 'required|exists:users,id'
-        ]);
+        try {
+            // Validate inputs
+            $validated = $request->validate([
+                'customer_id' => 'required|exists:customers,id',
+                'start_date' => 'required|date',
+                'expire_date' => 'required|date|after:start_date',
+                'payment' => 'required|numeric',
+                'note' => 'nullable|string',
+                'created_by' => 'required|exists:users,id'
+            ]);
 
-        $contract = Contract::create($validated);
-        return response()->json($contract->load(['customer', 'creator:id,name']), 201); // Load creator's name
+            // Clean input to prevent XSS attacks
+            if (isset($validated['note'])) {
+                $validated['note'] = strip_tags($validated['note']);
+            }
+
+            // Create contract
+            $contract = Contract::create($validated);
+            return response()->json(
+                $contract->load(['customer', 'creator:id,name']),
+                201
+            );
+        } catch (ValidationException $e) {
+            return response()->json(['error' => $e->errors()], 422);
+        } catch (Exception $e) {
+            Log::error('Error creating contract: ' . $e->getMessage());
+            return response()->json(['error' => 'Internal Server Error'], 500);
+        }
     }
 
-    public function show(Contract $contract)
+    public function show($id)
     {
-        return $contract->load(['customer', 'creator:id,name']); // Include creator's name
+        try {
+            $contract = Contract::with(['customer', 'creator:id,name'])->findOrFail($id);
+            return response()->json($contract, 200);
+        } catch (ModelNotFoundException $e) {
+            return response()->json(['error' => 'Contract not found'], 404);
+        } catch (Exception $e) {
+            Log::error('Error fetching contract: ' . $e->getMessage());
+            return response()->json(['error' => 'Internal Server Error'], 500);
+        }
     }
 
     public function update(Request $request, Contract $contract)
     {
-        $contract->update($request->all());
-        return response()->json($contract->load(['customer', 'creator:id,name']), 200); // Include creator's name
+        try {
+            // Validate input
+            $validated = $request->validate([
+                'customer_id' => 'sometimes|exists:customers,id',
+                'start_date' => 'sometimes|date',
+                'expire_date' => 'sometimes|date|after:start_date',
+                'payment' => 'sometimes|numeric',
+                'note' => 'nullable|string',
+                'created_by' => 'sometimes|exists:users,id'
+            ]);
+
+            // Clean input to prevent XSS attacks
+            if (isset($validated['note'])) {
+                $validated['note'] = strip_tags($validated['note']);
+            }
+
+            // Update contract
+            $contract->update($validated);
+            return response()->json(
+                $contract->load(['customer', 'creator:id,name']),
+                200
+            );
+        } catch (ValidationException $e) {
+            return response()->json(['error' => $e->errors()], 422);
+        } catch (Exception $e) {
+            Log::error('Error updating contract: ' . $e->getMessage());
+            return response()->json(['error' => 'Internal Server Error'], 500);
+        }
     }
 
-    public function destroy(Contract $contract)
+    public function destroy($id)
     {
-        $contract->delete();
-        return response()->json(null, 204);
+        try {
+            $contract = Contract::findOrFail($id);
+            $contract->delete();
+            return response()->json(['message' => 'Contract deleted successfully'], 200);
+        } catch (ModelNotFoundException $e) {
+            return response()->json(['error' => 'Contract not found'], 404);
+        } catch (Exception $e) {
+            Log::error('Error deleting contract: ' . $e->getMessage());
+            return response()->json(['error' => 'Internal Server Error'], 500);
+        }
     }
+
     public function findById($id)
     {
-        $Contract = Contract::find($id);
-        
-        if (!$Contract) {
-            return response()->json(['message' => 'Contract not found'], 404);
+        try {
+            $contract = Contract::with(['customer', 'creator:id,name'])->findOrFail($id);
+            return response()->json($contract, 200);
+        } catch (ModelNotFoundException $e) {
+            return response()->json(['error' => 'Contract not found'], 404);
+        } catch (Exception $e) {
+            Log::error('Error finding contract: ' . $e->getMessage());
+            return response()->json(['error' => 'Internal Server Error'], 500);
         }
-        
-        return response()->json($Contract);
     }
+
     public function getContractsByCustomer($customer_id)
     {
-        // Check if the customer exists
-        $customerExists = Customer::where('id', $customer_id)->exists();
-    
-        if (!$customerExists) {
-            return response()->json(['error' => 'Customer not found'], 404);
+        try {
+            if (!Customer::where('id', $customer_id)->exists()) {
+                return response()->json(['error' => 'Customer not found'], 404);
+            }
+
+            $contracts = Contract::where('customer_id', $customer_id)
+                ->with(['customer', 'creator:id,name'])
+                ->paginate(10);
+
+            return response()->json($contracts, 200);
+        } catch (Exception $e) {
+            Log::error('Error fetching contracts by customer: ' . $e->getMessage());
+            return response()->json(['error' => 'Internal Server Error'], 500);
         }
-    
-        // Fetch contracts for the customer
-        $contracts = Contract::where('customer_id', $customer_id)
-            ->with(['customer', 'creator:id,name'])
-            ->paginate(10);
-    
-    
-    
-        return response()->json($contracts, 200);
     }
-    
 }

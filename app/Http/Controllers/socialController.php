@@ -51,7 +51,7 @@ class socialController extends Controller
     
         $token = $user->createToken('google-token')->plainTextToken;
     
-        return redirect()->away('http://localhost:5174/?user=' . $token);
+        return redirect()->away('https://www.karbein.net/?user=' . $token);
     }
     
   

@@ -37,7 +37,7 @@ return [
     'google' => [
       'client_id'=>"239119985557-eqql7noi1dcqn09sa3aid9bknsi3imt7.apps.googleusercontent.com",
       'client_secret'=>"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",
-      'redirect'=>"http://127.0.0.1:8000/auth/callback",
+      'redirect'=>"https://api.karbein.net/auth/callback",
 
     ],
 
